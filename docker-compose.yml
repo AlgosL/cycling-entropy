@@ -1,0 +1,17 @@
+version: "3"
+services:
+
+  rstudio:
+    image: rstudio_cycling-entropy:latest
+    build:
+      context: ./rstudio
+    ports:
+      - "8788:8787"
+    volumes:
+          - ".:/home/rstudio/cycling-entropy"
+          - "./src:/home/rstudio/cycling-entropy/src"
+    environment:
+          - PASSWORD=letmein
+          - ROOT=true
+          - USERID=1001
+          - GROUPID=1001
