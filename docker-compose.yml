@@ -6,7 +6,7 @@ services:
     build:
       context: ./rstudio
     ports:
-      - "8788:8787"
+      - "8789:8787"
     volumes:
           - ".:/home/rstudio/cycling-entropy"
           - "./src:/home/rstudio/cycling-entropy/src"
