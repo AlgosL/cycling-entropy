@@ -1,0 +1,327 @@
+---
+title: "R Notebook"
+output: 
+  html_document:
+    self_contained: no
+params: 
+  seed: 42
+  nPerms: 10000
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+library(tidyverse)
+library(ggbeeswarm)
+library(ptestr)
+library(ggpubr)
+library(rstatix)
+library(eegUtils)
+```
+
+# LOADING FILES
+
+```{r eval=FALSE, include=FALSE}
+read_entropy <- function(path){
+  
+  readr::read_delim(path, 
+                    delim = '\t', 
+                    col_names = FALSE, 
+                    show_col_types = FALSE) %>% 
+    dplyr::mutate(t = dplyr::row_number()) %>% 
+    dplyr::select(-c(X19, X20, X21, X22, X23, X24, X25)) %>% 
+    tidyr::pivot_longer(cols = -t) %>% 
+    dplyr::rename(sub = name) %>% 
+    return()
+}
+```
+
+```{r eval=FALSE, include=FALSE}
+df <- dir(path = 'data', full.names = TRUE) %>% 
+  tibble::as_tibble() %>% 
+  dplyr::rename(path = value) %>% 
+  tidyr::separate(path, 
+                  into = c(NA, 'Electrode', NA, 'State'), 
+                  sep = '_', 
+                  remove = FALSE) %>%
+  dplyr::mutate(Eyes = State) %>% 
+  dplyr::mutate(State = dplyr::recode(State,  
+                                      'POA.dat' = 'Pedalling', 
+                                      'POF.dat' = 'Pedalling',
+                                      'ROA.dat' = 'Resting', 
+                                      'ROF.dat' = 'Resting'), 
+                Eyes = dplyr::recode(Eyes,  
+                                     'POA.dat' = 'Open', 
+                                     'POF.dat' = 'Closed',
+                                     'ROA.dat' = 'Open', 
+                                     'ROF.dat' = 'Closed')) %>% 
+  dplyr::mutate(Electrode = dplyr::recode(Electrode, 
+                                          '2' = 'F3-Fz', 
+                                          '3' = 'F4-Fz', 
+                                          '4' = 'C3-Cz', 
+                                          '5' = 'C4-Cz', 
+                                          '6' = 'P3-Pz', 
+                                          '7' = 'P4-Pz', 
+                                          '8' = 'O1-A2', 
+                                          '9' = 'O2-A1')) %>% 
+  dplyr::mutate(data = purrr::map(path, ~read_entropy(.x))) %>% 
+  tidyr::unnest()
+```
+
+```{r}
+source('src/legacy.R')
+```
+
+
+```{r}
+df <- pla %>% 
+  dplyr::rename(sub = ind, 
+                Eyes = olho, 
+                State = MOV, 
+                Electrode = POS, 
+                Side = LAT, 
+                value = dados) %>% 
+  dplyr::mutate(State = dplyr::recode(State, 'PED' = 'Pedalling', 'REP' = 'Resting')) %>% 
+  dplyr::mutate(Eyes = dplyr::recode(Eyes, 'OA' = 'Open', 'OF' = 'Closed')) %>% 
+  dplyr::mutate(Electrode = dplyr::recode(Electrode, 
+                                          'C' = 'Central', 
+                                          'F' = 'Frontal', 
+                                          'O' = 'Occipital', 
+                                          'P' = 'Parietal')) %>% 
+  dplyr::mutate(Side = dplyr::recode(Side, 'DIR' = 'Right', 'ESQ' = 'Left')) %>% 
+  dplyr::mutate(Eyes = relevel(as.factor(Eyes), ref = 'Open'), 
+                State = relevel(as.factor(State), ref = 'Resting'))
+```
+
+```{r eyes, fig.height=8, fig.width=18, dev='pdf'}
+closedEyes_model <- df %>% 
+  dplyr::filter(State == 'Resting') %>% 
+  dplyr::group_by(sub, Electrode, State, Eyes, Side) %>% 
+  dplyr::summarise(med_entr = median(value, na.rm = TRUE)) %>% 
+  dplyr::group_by(Electrode, Side) %>% 
+  tidyr::nest() %>% 
+  dplyr::mutate(mk = list(map_df(data, 
+                                 ~grouped_perm_glmm(
+                                   .x, 
+                                   formla = med_entr ~ Eyes + (1|sub), 
+                                   var_to_perm = 'med_entr', 
+                                   permNum = params$nPerms, 
+                                   seed = params$seed)))) %>% 
+  tidyr::unnest_wider(mk) %>% 
+  tidyr::unnest(-c(data)) %>% 
+  dplyr::filter(term == 'EyesClosed') %>% 
+  dplyr::select(-c(data, effect))
+
+
+stat.test <- df %>% 
+  dplyr::filter(State == 'Resting') %>% 
+  dplyr::group_by(sub, Electrode, State, Eyes, Side) %>% 
+  dplyr::summarise(med_entr = median(value, na.rm = TRUE)) %>% 
+  group_by(Side, Electrode) %>%
+  t_test(med_entr ~ Eyes, paired = TRUE) %>%
+  add_significance() %>% 
+  add_xy_position(x = "Eyes") %>% 
+  dplyr::inner_join(closedEyes_model %>% 
+                      dplyr::select(Electrode, Side, statistic, p.perm) %>% 
+                      dplyr::rename(stat = statistic)) %>% 
+  dplyr::mutate(ps = format(round(p.perm, 3), nsmall = 3), 
+                s = format(round(stat, 3), nsmall = 3))
+
+
+df %>% 
+  dplyr::filter(State == 'Resting') %>% 
+  dplyr::group_by(sub, Electrode, State, Eyes, Side) %>% 
+  dplyr::summarise(med_entr = median(value, na.rm = TRUE)) %>% 
+  
+  ggplot2::ggplot(aes(x = Eyes, 
+                      y = med_entr)) + 
+  geom_line(aes(group = sub), 
+            colour = 'grey80') + 
+  geom_boxplot(outlier.shape = NA) + 
+  geom_quasirandom(fill = "#3C5488", 
+                   size = 4, 
+                   pch = 21, 
+                   alpha = 0.8, 
+                   colour = 'white') + 
+  ylab('Entropy') + 
+  theme_bw() + 
+  ggpubr::stat_pvalue_manual(stat.test, 
+                             label = "t = {s} | p = {ps}", 
+                             hide.ns = TRUE, 
+                             y.position = 5.9)  + 
+  facet_grid(Side ~ Electrode) + 
+  ylim(c(3.5, 6))
+```
+
+```{r state, fig.height=8, fig.width=18, dev='pdf'}
+pedalling_model <- df %>% 
+  dplyr::group_by(sub, Electrode, State, Eyes, Side) %>% 
+  dplyr::summarise(med_entr = median(value, na.rm = TRUE)) %>% 
+  dplyr::group_by(Electrode, Side) %>% 
+  tidyr::nest() %>% 
+  dplyr::mutate(mk = list(map_df(data, 
+                                 ~grouped_perm_glmm(
+                                   .x, 
+                                   formla = med_entr ~ State + (1|sub), 
+                                   var_to_perm = 'med_entr', 
+                                   permNum = params$nPerms, 
+                                   seed = params$seed)))) %>% 
+  tidyr::unnest_wider(mk) %>% 
+  tidyr::unnest(-c(data)) %>% 
+  dplyr::filter(term == 'StatePedalling') %>% 
+  dplyr::select(-c(data, effect))
+
+
+stat.test <- df %>% 
+  dplyr::group_by(sub, Electrode, State, Eyes, Side) %>% 
+  dplyr::summarise(med_entr = median(value, na.rm = TRUE)) %>% 
+  group_by(Side, Electrode) %>%
+  t_test(med_entr ~ State, paired = TRUE) %>%
+  add_significance() %>% 
+  add_xy_position(x = "Eyes") %>% 
+  dplyr::inner_join(pedalling_model %>% 
+                      dplyr::select(Electrode, Side, statistic, p.perm) %>% 
+                      dplyr::rename(stat = statistic)) %>% 
+  dplyr::mutate(ps = dplyr::if_else(p.perm == 0, 'p < 0.001', paste0('p = ',format(round(p.perm, 3), nsmall = 3))), 
+                s = format(round(stat, 3), nsmall = 3), 
+                xmin = 1, 
+                xmax = 2)
+  
+
+df %>% 
+  dplyr::group_by(sub, Electrode, State, Eyes, Side) %>% 
+  dplyr::summarise(med_entr = median(value, na.rm = TRUE)) %>% 
+  
+  ggplot2::ggplot(aes(x = State, 
+                      y = med_entr)) + 
+  geom_line(aes(group = interaction(sub, Eyes)), 
+            colour = 'grey80') + 
+  geom_boxplot(outlier.shape = NA) + 
+  geom_quasirandom(fill = "#3C5488", 
+                   size = 4, 
+                   pch = 21, 
+                   alpha = 0.8, 
+                   colour = 'white') + 
+  scale_fill_manual(values = c("#3C5488", "#E64B35")) + 
+  ylab('Entropy') + 
+  theme_bw() + 
+  ggpubr::stat_pvalue_manual(stat.test, 
+                             label = "t = {s} | {ps}", 
+                             hide.ns = TRUE, 
+                             y.position = 5.9)  + 
+  facet_grid(Side ~ Electrode) + 
+  ylim(c(2.5, 6))
+```
+
+```{r state_int, fig.height=8, fig.width=18, dev='pdf'}
+temp <- df %>% 
+  dplyr::group_by(sub, Electrode, State, Eyes, Side) %>% 
+  dplyr::summarise(med_entr = median(value, na.rm = TRUE)) %>% 
+  dplyr::group_by(Electrode, Side) %>% 
+  tidyr::nest() %>% 
+  dplyr::mutate(mk = list(map_df(data, 
+                                 ~grouped_perm_glmm(
+                                   .x, 
+                                   formla = med_entr ~ State*Eyes + (1|sub), 
+                                   var_to_perm = 'med_entr', 
+                                   permNum = params$nPerms, 
+                                   seed = params$seed)))) %>% 
+  tidyr::unnest_wider(mk) %>% 
+  tidyr::unnest(-c(data)) 
+
+pedallingEyes_model <- temp %>% 
+  dplyr::filter(term == 'StatePedalling') %>% 
+  dplyr::select(-c(data, effect))
+
+
+stat.test <- df %>% 
+  dplyr::group_by(sub, Electrode, State, Eyes, Side) %>% 
+  dplyr::summarise(med_entr = median(value, na.rm = TRUE)) %>% 
+  group_by(Side, Electrode) %>%
+  t_test(med_entr ~ State, paired = TRUE) %>%
+  add_significance() %>% 
+  add_xy_position(x = "Eyes") %>% 
+  dplyr::inner_join(pedallingEyes_model %>% 
+                      dplyr::select(Electrode, Side, statistic, p.perm) %>% 
+                      dplyr::rename(stat = statistic)) %>% 
+  dplyr::mutate(ps = dplyr::if_else(p.perm == 0, 'p < 0.001', paste0('p = ',format(round(p.perm, 3), nsmall = 3))), 
+                s = format(round(stat, 3), nsmall = 3), 
+                xmin = 1, 
+                xmax = 2)
+
+df %>% 
+  dplyr::group_by(sub, Electrode, State, Eyes, Side) %>% 
+  dplyr::summarise(med_entr = median(value, na.rm = TRUE)) %>% 
+  
+  ggplot2::ggplot(aes(x = State, 
+                      y = med_entr)) + 
+  geom_line(aes(group = interaction(sub, Eyes)), 
+            colour = 'grey80') + 
+  geom_boxplot(outlier.shape = NA) + 
+  geom_quasirandom(aes(fill = Eyes), 
+                   size = 4, 
+                   pch = 21, 
+                   alpha = 0.8, 
+                   colour = 'white') + 
+  scale_fill_manual(values = c("#3C5488", "#E64B35")) + 
+  ylab('Entropy') + 
+  theme_bw() + 
+  ggpubr::stat_pvalue_manual(stat.test, 
+                             label = "t = {s} | p = {ps}", 
+                             hide.ns = TRUE, 
+                             y.position = 5.9)  + 
+  facet_grid(Side ~ Electrode) + 
+  ylim(c(2.5, 6))
+```
+
+```{r state_eyes, fig.height=8, fig.width=18, dev='pdf'}
+pedallingEyes_model <- temp %>% 
+  dplyr::filter(term == 'StatePedalling:EyesClosed') %>% 
+  dplyr::select(-c(data, effect))
+
+
+stat.test <- df %>% 
+  dplyr::group_by(sub, Electrode, State, Eyes, Side) %>% 
+  dplyr::summarise(med_entr = median(value, na.rm = TRUE)) %>% 
+  group_by(Side, Electrode) %>%
+  t_test(med_entr ~ State, paired = TRUE) %>%
+  add_significance() %>% 
+  add_xy_position(x = "Eyes") %>% 
+  dplyr::inner_join(pedallingEyes_model %>% 
+                      dplyr::select(Electrode, Side, statistic, p.perm) %>% 
+                      dplyr::rename(stat = statistic)) %>% 
+  dplyr::mutate(ps = dplyr::if_else(p.perm == 0, 'p < 0.001', paste0('p = ',format(round(p.perm, 3), nsmall = 3))), 
+                s = format(round(stat, 3), nsmall = 3), 
+                xmin = 1, 
+                xmax = 2)
+
+df %>% 
+  dplyr::group_by(sub, Electrode, State, Eyes, Side) %>% 
+  dplyr::summarise(med_entr = median(value, na.rm = TRUE)) %>% 
+  
+  ggplot2::ggplot(aes(x = State, 
+                      y = med_entr)) + 
+  geom_line(aes(group = interaction(sub, Eyes)), 
+            colour = 'grey80') + 
+  geom_boxplot(outlier.shape = NA) + 
+  geom_quasirandom(aes(fill = Eyes), 
+                   size = 4, 
+                   pch = 21, 
+                   alpha = 0.8, 
+                   colour = 'white') + 
+  scale_fill_manual(values = c("#3C5488", "#E64B35")) + 
+  ylab('Entropy') + 
+  theme_bw() + 
+  ggpubr::stat_pvalue_manual(stat.test, 
+                             label = "t = {s} | p = {ps}", 
+                             hide.ns = TRUE, 
+                             y.position = 5.9)  + 
+  facet_grid(Side ~ Electrode) + 
+  ylim(c(2.5, 6))
+```
+
+```{r}
+topoplot(demo_epochs, 
+         time_lim = c(.22, .25 ))
+```
+

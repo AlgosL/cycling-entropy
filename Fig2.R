@@ -11,10 +11,10 @@ pos_o<-rep("O",100)
 idd<-c("I1","I2","I3","I4","I5","I6","I7","I8","I12","I13","I14","I15","I17","I18","I20","I21","I22","I24")
 sd_cri<-10; NN<-18; Ncol<-6;
 
-oiPOA2<-read.table("SMax_2_col.dat")
-oiROA2<-read.table("SMax_2_col_ROA.dat")
-oiPOF2<-read.table("SMax_2_col_POF.dat")
-oiROF2<-read.table("SMax_2_col_ROF.dat")
+oiPOA2<-read.table("data/SMax_2_col_POA.dat")
+oiROA2<-read.table("data/SMax_2_col_ROA.dat")
+oiPOF2<-read.table("data/SMax_2_col_POF.dat")
+oiROF2<-read.table("data/SMax_2_col_ROF.dat")
 
 for(i in 1:NN){
   indiv<-rep(idd[i],100)
@@ -37,10 +37,10 @@ for(i in 1:NN){
     pli2<-rbind(pli2,pli)}
 }
 
-oiPOA3<-read.table("SMax_3_col.dat")
-oiROA3<-read.table("SMax_3_col_ROA.dat")
-oiPOF3<-read.table("SMax_3_col_POF.dat")
-oiROF3<-read.table("SMax_3_col_ROF.dat")
+oiPOA3<-read.table("data/SMax_3_col_POA.dat")
+oiROA3<-read.table("data/SMax_3_col_ROA.dat")
+oiPOF3<-read.table("data/SMax_3_col_POF.dat")
+oiROF3<-read.table("data/SMax_3_col_ROF.dat")
 
 for(i in 1:NN){
   indiv<-rep(idd[i],100)
@@ -63,10 +63,10 @@ for(i in 1:NN){
     pli3<-rbind(pli3,pli)}
 }
 
-oiPOA4<-read.table("SMax_4_col.dat")
-oiROA4<-read.table("SMax_4_col_ROA.dat")
-oiPOF4<-read.table("SMax_4_col_POF.dat")
-oiROF4<-read.table("SMax_4_col_ROF.dat")
+oiPOA4<-read.table("data/SMax_4_col_POA.dat")
+oiROA4<-read.table("data/SMax_4_col_ROA.dat")
+oiPOF4<-read.table("data/SMax_4_col_POF.dat")
+oiROF4<-read.table("data/SMax_4_col_ROF.dat")
 
 for(i in 1:NN){
   indiv<-rep(idd[i],100)
@@ -90,10 +90,10 @@ for(i in 1:NN){
 }
 
 
-oiPOA5<-read.table("SMax_5_col.dat")
-oiROA5<-read.table("SMax_5_col_ROA.dat")
-oiPOF5<-read.table("SMax_5_col_POF.dat")
-oiROF5<-read.table("SMax_5_col_ROF.dat")
+oiPOA5<-read.table("data/SMax_5_col_POA.dat")
+oiROA5<-read.table("data/SMax_5_col_ROA.dat")
+oiPOF5<-read.table("data/SMax_5_col_POF.dat")
+oiROF5<-read.table("data/SMax_5_col_ROF.dat")
 
 for(i in 1:NN){
   indiv<-rep(idd[i],100)
@@ -116,10 +116,10 @@ for(i in 1:NN){
     pli5<-rbind(pli5,pli)}
 }
 
-oiPOA6<-read.table("SMax_6_col.dat")
-oiROA6<-read.table("SMax_6_col_ROA.dat")
-oiPOF6<-read.table("SMax_6_col_POF.dat")
-oiROF6<-read.table("SMax_6_col_ROF.dat")
+oiPOA6<-read.table("data/SMax_6_col_POA.dat")
+oiROA6<-read.table("data/SMax_6_col_ROA.dat")
+oiPOF6<-read.table("data/SMax_6_col_POF.dat")
+oiROF6<-read.table("data/SMax_6_col_ROF.dat")
 
 for(i in 1:NN){
   indiv<-rep(idd[i],100)
@@ -142,10 +142,10 @@ for(i in 1:NN){
     pli6<-rbind(pli6,pli)}
 }
 
-oiPOA7<-read.table("SMax_7_col.dat")
-oiROA7<-read.table("SMax_7_col_ROA.dat")
-oiPOF7<-read.table("SMax_7_col_POF.dat")
-oiROF7<-read.table("SMax_7_col_ROF.dat")
+oiPOA7<-read.table("data/SMax_7_col_POA.dat")
+oiROA7<-read.table("data/SMax_7_col_ROA.dat")
+oiPOF7<-read.table("data/SMax_7_col_POF.dat")
+oiROF7<-read.table("data/SMax_7_col_ROF.dat")
 
 for(i in 1:NN){
   indiv<-rep(idd[i],100)
@@ -168,10 +168,10 @@ for(i in 1:NN){
     pli7<-rbind(pli7,pli)}
 }
 
-oiPOA8<-read.table("SMax_8_col.dat")
-oiROA8<-read.table("SMax_8_col_ROA.dat")
-oiPOF8<-read.table("SMax_8_col_POF.dat")
-oiROF8<-read.table("SMax_8_col_ROF.dat")
+oiPOA8<-read.table("data/SMax_8_col_POA.dat")
+oiROA8<-read.table("data/SMax_8_col_ROA.dat")
+oiPOF8<-read.table("data/SMax_8_col_POF.dat")
+oiROF8<-read.table("data/SMax_8_col_ROF.dat")
 
 for(i in 1:NN){
   indiv<-rep(idd[i],100)
@@ -194,10 +194,10 @@ for(i in 1:NN){
     pli8<-rbind(pli8,pli)}
 }
 
-oiPOA9<-read.table("SMax_9_col.dat")
-oiROA9<-read.table("SMax_9_col_ROA.dat")
-oiPOF9<-read.table("SMax_9_col_POF.dat")
-oiROF9<-read.table("SMax_9_col_ROF.dat")
+oiPOA9<-read.table("data/SMax_9_col_POA.dat")
+oiROA9<-read.table("data/SMax_9_col_ROA.dat")
+oiPOF9<-read.table("data/SMax_9_col_POF.dat")
+oiROF9<-read.table("data/SMax_9_col_ROF.dat")
 
 for(i in 1:NN){
   indiv<-rep(idd[i],100)
@@ -228,7 +228,7 @@ u6<-as.vector(unique(ind))
 
 names2<-c("Open Eye","Close Eye")
 pdf("fig2.pdf")
-boxplot(dados[POS=="O"&MOV=="REP"&olho=="OA"&LAT=="DIR"],dados[POS=="O"&MOV=="PED"&olho=="OF"&LAT=="DIR"], ylab="Entropy",names=names2,ylim=c(3,6),outline=FALSE,cex.lab=1.3,cex.axis=1.2)
+boxplot(dados[POS=="O"&MOV=="REP"&olho=="OA"&LAT=="DIR"],dados[POS=="O"&MOV=="REP"&olho=="OF"&LAT=="DIR"], ylab="Entropy",names=names2,ylim=c(3,6),outline=FALSE,cex.lab=1.3,cex.axis=1.2)
 dev.off()
 
 
