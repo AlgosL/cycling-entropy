@@ -15,3 +15,17 @@ services:
           - ROOT=true
           - USERID=1001
           - GROUPID=1001
+
+  jupyter:
+    image: python_bstates:latest
+    build:
+      context: ./jupyter
+    ports:
+      - "8888:8888"
+    volumes:
+          - "./src:/src"
+          - "./test:/test"
+          - "./data:/data"
+          - "./jupyter:/jupyter"
+    environment:
+          - JUPYTER_ENABLE_LAB=yes
