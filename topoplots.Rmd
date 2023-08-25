@@ -1,0 +1,38 @@
+---
+title: "topoplots"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(akima)
+library(scales)
+library(mgcv)
+library(gridExtra)
+library(png)
+library(grid)
+```
+
+```{r}
+df %>% 
+  dplyr::group_by(Eyes, State, Electrode, Side) %>% 
+  dplyr::summarise(amplitude = median(value, na.rm = TRUE)) %>% 
+  dplyr::ungroup() %>% 
+  dplyr::mutate(electrode = paste0(Electrode, '_', Side)) %>% 
+  dplyr::mutate(electrode = dplyr::recode(electrode, 
+                                          'Central_Left' = 'C3', 
+                                          'Central_Right' = 'C4', 
+                                          'Occipital_Left' = 'O1', 
+                                          'Occipital_Right' = 'O2', 
+                                          'Frontal_Left' = 'F3', 
+                                          'Frontal_Right' = 'F4', 
+                                          'Parietal_Left' = 'P3', 
+                                          'Parietal_Right' = 'P4')) %>% 
+  dplyr::filter(Eyes == 'Closed' & State == 'Pedalling') %>% 
+  dplyr::select(electrode, amplitude) %>% 
+  readr::write_csv('closedPedalling.csv')
+```

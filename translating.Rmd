@@ -267,7 +267,7 @@ df %>%
   ylab('Entropy') + 
   theme_bw() + 
   ggpubr::stat_pvalue_manual(stat.test, 
-                             label = "t = {s} | p = {ps}", 
+                             label = "t = {s} | {ps}", 
                              hide.ns = TRUE, 
                              y.position = 5.9)  + 
   facet_grid(Side ~ Electrode) + 
@@ -313,7 +313,7 @@ df %>%
   ylab('Entropy') + 
   theme_bw() + 
   ggpubr::stat_pvalue_manual(stat.test, 
-                             label = "t = {s} | p = {ps}", 
+                             label = "t = {s} | {ps}", 
                              hide.ns = TRUE, 
                              y.position = 5.9)  + 
   facet_grid(Side ~ Electrode) + 
